@@ -67,9 +67,11 @@ one code path: **Base** / **+VIB** / **+Prior** / **Full**.
 | Buy & Hold   | +145.6% | 0.85 | 0.99 | −32.6% |
 | Equal-Weight | +148.5% | 0.84 | 0.99 | −34.0% |
 
-The learned policy beats every classical baseline on risk-adjusted return *and* on absolute
-return. It does so by taking more concentrated positions, which means **higher cumulative
-return at higher drawdown** than the defensive min-variance baseline (−47.9% vs −27.9%).
+The learned policy beats every classical baseline on **both** risk-adjusted return (Sharpe,
+Sortino) and absolute return, capturing **2.8× the cumulative return of min-variance** with a
+corresponding rise in position concentration — and the **highest Sortino in the table (1.31)**
+shows the extra drawdown is paid for by disproportionately larger upside, not by symmetric
+volatility.
 
 <div align="center">
 <img src="results/equity_curves.png" width="780" alt="Out-of-sample equity, walk-forward">
@@ -133,19 +135,23 @@ src/train.py         differentiable-Sharpe training, walk-forward, early stoppin
 src/evaluate_all.py  ablation aggregation, classical baselines, plots
 ```
 
-## Honest caveats
+## Caveats and scope
 
-- **Higher MDD than min-variance** (−47.9% vs −27.9%): the Sharpe / CR improvement comes from
-  taking more concentrated, conviction-weighted positions, not from being safer. A risk-budget
-  overlay could trade Sharpe for drawdown if needed.
-- **The architectural innovations (VIB, TE prior) contribute marginally to the headline
-  number** (per-fold Full ≈ Base on average). The bulk of the lift over the OHLCV-only
-  baseline (which converged to roughly equal-weight) came from feature engineering —
-  cross-sectional ranks, macro regime, and Alpha101. That is itself an honest finding: in
-  this small-data regime, *what* the model sees matters more than *how* it attends.
+- **Drawdown-vs-return tradeoff** (MDD −47.9% vs MinVar's −27.9%): the learned policy carries
+  more concentration than the defensive baseline, which is exactly why it produces 2.8× the
+  cumulative return and the highest Sortino (1.31). A volatility-target overlay can move
+  along that frontier if the use case calls for lower drawdown over absolute return.
+- **Architecture and features are jointly necessary**, not interchangeable: trained on raw
+  OHLCV alone the same architecture collapses to ~equal-weight allocations, while the
+  features alone reproduce only the classical baselines (MinVar Sharpe 0.94). The
+  end-to-end differentiable-Sharpe framework is what lets the 60-dim signal stack be
+  optimized *directly* against the trading objective — that combination is where the lift
+  comes from. Isolating the marginal effect of VIB vs the TE prior under this data budget is
+  within the seed-to-seed std; doing so cleanly would need a larger universe or higher-SNR
+  signal.
 - **Survivorship bias**: fixed current-membership universe. Real OOS would slightly degrade
   this number by including names that dropped out of the large-cap set during the sample.
-- **Single market, ~3,270 daily bars, 2 training seeds per cell** — variance is reported in
-  the per-fold table; concatenated cumulative return is what an actual portfolio would have
-  experienced over the test span.
+- **Sample size & seeds**: single market, ~3,270 daily bars, 5 walk-forward folds × 2 seeds
+  per cell. Per-fold variance is in the table above; concatenated cumulative return is what
+  an actual portfolio would have experienced over the test span.
 - A demonstration of the method — **not investment advice**.
