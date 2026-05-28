@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+data/*.npz
+results/cells/
+*.tgz
+setup.log
+setup.sh
+local_setup.sh
+local_setup.log
+.venv/
+_refsrc/
